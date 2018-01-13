@@ -5,10 +5,19 @@ from keras.layers import TimeDistributed, Dense, Activation, Bidirectional, LSTM
 from keras.preprocessing.sequence import pad_sequences
 from keras.layers.embeddings import Embedding
 from sklearn.cross_validation import train_test_split
-from keras.backend import tf
 from sklearn.metrics import confusion_matrix, accuracy_score
 from keras.preprocessing import sequence
+from gensim.models.keyedvectors import KeyedVectors
 
+
+
+vocab_dim = 200   # dimensionality of the word vectors
+max_features = 20000
+embedding_size = 128
+hidden_size = 32
+
+
+word_vectors = KeyedVectors.load('ko/ko.bin')
 X, y = load_corpus()
 
 all_text = [c for x in X for c in x]
@@ -18,6 +27,7 @@ ind2word = {index: word for index, word in enumerate(words)}
 labels = list(set([c for x in y for c in x]))
 label2ind = {label: (index + 1) for index, label in enumerate(labels)}
 ind2label = {(index + 1): label for index, label in enumerate(labels)}
+out_size = len(label2ind) + 1
 lengths = [len(x) for x in X]
 print('Input sequence length range: ', max(lengths), min(lengths))
 maxlen = max([len(x) for x in X])
@@ -28,7 +38,7 @@ def encode(x, n):
     return result
 
 X = [[word2ind[c] for c in x] for x in X]
-X = sequence.pad_sequences(X, maxlen=maxlen)
+X = sequence.pad_sequences(X, maxlen=maxlen)    
 
 
 max_label = max(label2ind.values()) + 1
@@ -39,17 +49,20 @@ y = pad_sequences(y, maxlen=maxlen)
 X_train, X_test, y_train, y_test = train_test_split(X, y,
                                                test_size=0.3, random_state=42)
 
+# prepare embedding matrix
 
-
-max_features = 20000
-embedding_size = 128
-hidden_size = 32
-out_size = len(label2ind) + 1
-
+nb_words = min(max_features, len(words) + 1)
+embedding_matrix = np.zeros((nb_words, vocab_dim))
+for word, i in word2ind.items():
+    if i >= max_features:
+        continue
+    if word in word_vectors:
+        embedding_matrix[i] = word_vectors[word]
 
 model = Sequential()
-model.add(Embedding(input_dim=max_features, output_dim= 128,
-                    input_length=maxlen, mask_zero=True))
+model.add(Embedding(nb_words, vocab_dim, weights=[embedding_matrix], input_length=maxlen, trainable=False))
+#model.add(Embedding(input_dim=max_features, output_dim= 128,
+#                    input_length=maxlen, mask_zero=True))
 model.add(Bidirectional(LSTM(hidden_size, return_sequences=True)))
 model.add(TimeDistributed(Dense(out_size)))
 model.add(Activation('softmax'))
