@@ -8,7 +8,7 @@ from sklearn.cross_validation import train_test_split
 from sklearn.metrics import confusion_matrix, accuracy_score
 from keras.preprocessing import sequence
 from gensim.models.keyedvectors import KeyedVectors
-
+from sklearn.metrics import classification_report
 
 
 vocab_dim = 200   # dimensionality of the word vectors
@@ -51,18 +51,15 @@ X_train, X_test, y_train, y_test = train_test_split(X, y,
 
 # prepare embedding matrix
 
-nb_words = min(max_features, len(words) + 1)
-embedding_matrix = np.zeros((nb_words, vocab_dim))
+embedding_matrix = np.zeros((len(words) + 1, vocab_dim))
 for word, i in word2ind.items():
-    if i >= max_features:
-        continue
     if word in word_vectors:
         embedding_matrix[i] = word_vectors[word]
 
 model = Sequential()
-model.add(Embedding(nb_words, vocab_dim, weights=[embedding_matrix], input_length=maxlen, trainable=False))
-#model.add(Embedding(input_dim=max_features, output_dim= 128,
-#                    input_length=maxlen, mask_zero=True))
+#model.add(Embedding(len(words) + 1, vocab_dim, weights=[embedding_matrix], input_length=maxlen, trainable=False))
+model.add(Embedding(input_dim=max_features, output_dim= 128,
+                    input_length=maxlen, mask_zero=True))
 model.add(Bidirectional(LSTM(hidden_size, return_sequences=True)))
 model.add(TimeDistributed(Dense(out_size)))
 model.add(Activation('softmax'))
@@ -88,12 +85,10 @@ pr = model.predict_classes(X_train)
 yh = y_train.argmax(2)
 fyh, fpr = score(yh, pr)
 print('Training accuracy:', accuracy_score(fyh, fpr))
-print('Training confusion matrix:')
-print(confusion_matrix(fyh, fpr))
+print(classification_report(fyh, fpr))
 
 pr = model.predict_classes(X_test)
 yh = y_test.argmax(2)
 fyh, fpr = score(yh, pr)
 print('Testing accuracy:', accuracy_score(fyh, fpr))
-print('Testing confusion matrix:')
-print(confusion_matrix(fyh, fpr))
+print(classification_report(fyh, fpr))
