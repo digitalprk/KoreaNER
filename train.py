@@ -117,6 +117,14 @@ def CNN(seq_length, length, input_size, feature_maps, kernels, x):
     x = Reshape((seq_length, sum(feature_maps)))(x)
     return x
 
+def Single_CNN(seq_length, length, input_size, feature_maps, kernels, x): #testing with single layer
+    kernel = 3
+    reduced_l = length - kernel + 1
+    conv = Conv2D(50, (1, kernel), activation='tanh', data_format="channels_last")(x)
+    maxp = MaxPooling2D((1, reduced_l), data_format="channels_last")(conv)
+    x = Reshape((seq_length, 50))(maxp)
+    return x    
+
 char_idx = Input(batch_shape=(None, maxlen, max_word_len), dtype='int32')
 char_embeddings = TimeDistributed(Embedding(len(char2ind) + 1, char_embedding_size))(char_idx)
 cnn = CNN(maxlen, max_word_len, char_embedding_size, feature_maps, kernels, char_embeddings)
@@ -150,7 +158,7 @@ model.compile(loss='categorical_crossentropy', optimizer='adam')
 """
 
 batch_size = 32
-model.fit([X_char_train, X_train], y_train, batch_size=batch_size, epochs=5,
+model.fit([X_char_train, X_train], y_train, batch_size=batch_size, epochs=15,
           validation_data=([X_char_test, X_test], y_test))
 score = model.evaluate([X_char_test, X_test], y_test, batch_size=batch_size)
 print('Raw test score:', score)
