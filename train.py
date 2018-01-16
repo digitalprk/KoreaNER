@@ -10,6 +10,7 @@ from keras.preprocessing import sequence
 from keras.models import Model
 from gensim.models.keyedvectors import KeyedVectors
 from sklearn.metrics import classification_report
+from keras.callbacks import EarlyStopping
 #from keras.layers.convolutional import Convolution1D, MaxPooling1D, Convolution2D, MaxPooling2D, Conv2D
 #from keras.layers.core import Dense, Dropout, Activation, Flatten, Permute, Reshape, Input
 from keras.layers import Input, Dropout, Reshape, Concatenate, Conv2D, MaxPooling2D, BatchNormalization
@@ -158,8 +159,9 @@ model.compile(loss='categorical_crossentropy', optimizer='adam')
 """
 
 batch_size = 32
+early_stop = EarlyStopping(monitor='val_loss', patience=2, verbose=1)
 model.fit([X_char_train, X_train], y_train, batch_size=batch_size, epochs=15,
-          validation_data=([X_char_test, X_test], y_test))
+          validation_data=([X_char_test, X_test], y_test), callbacks = early_stop)
 score = model.evaluate([X_char_test, X_test], y_test, batch_size=batch_size)
 print('Raw test score:', score)
 
