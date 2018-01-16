@@ -1,7 +1,7 @@
 # KoreaNER / 한국어 개체명
 
 
-References:
+**References:**
 
 [Character-Aware Neural Language Models][2]
 
@@ -15,7 +15,8 @@ References:
 
 [Character-level Convolutional Networks for Text Classification][6]
 
-Open source projects (Github):
+
+**Open source projects (Github):**
 
 [CharCNN Pytorch][7]
 
@@ -35,6 +36,7 @@ Open source projects (Github):
 
 [Sequence Tagging with Tensorflow][15]
 
+
   [1]: https://arxiv.org/pdf/1505.05008.pdf
   [2]: https://arxiv.org/pdf/1505.05008.pdf
   [3]: https://aclweb.org/anthology/C/C16/C16-1030.pdf
@@ -49,6 +51,6 @@ Open source projects (Github):
   [12]: https://github.com/tttr222/autumn_ner/blob/master/model.py
   [13]: https://github.com/jarfo/kchar/
   [14]: https://github.com/aatkinson-old/deep-named-entity-recognition/blob/master/
-  [15]: Sequence Tagging with Tensorflow
+  [15]: https://guillaumegenthial.github.io/sequence-tagging-with-tensorflow.html
   
 
