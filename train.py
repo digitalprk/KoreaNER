@@ -8,6 +8,7 @@ from sklearn.cross_validation import train_test_split
 from sklearn.metrics import confusion_matrix, accuracy_score
 from keras.preprocessing import sequence
 from keras.models import Model
+from crf import ChainCRF
 from gensim.models.keyedvectors import KeyedVectors
 from sklearn.metrics import classification_report
 from keras.callbacks import EarlyStopping
@@ -128,7 +129,7 @@ def Single_CNN(seq_length, length, input_size, feature_maps, kernels, x): #testi
 
 char_idx = Input(batch_shape=(None, maxlen, max_word_len), dtype='int32')
 char_embeddings = TimeDistributed(Embedding(len(char2ind) + 1, char_embedding_size))(char_idx)
-cnn = CNN(maxlen, max_word_len, char_embedding_size, feature_maps, kernels, char_embeddings)
+cnn = Single_CNN(maxlen, max_word_len, char_embedding_size, feature_maps, kernels, char_embeddings)
 
 
 #word_embeddings = Embedding(len(words) + 1, vocab_dim, weights=[embedding_matrix], input_length=maxlen, trainable=True)
@@ -138,14 +139,17 @@ inputs = [char_idx, word_idx]
 
 x = BatchNormalization()(x)
 x = Bidirectional(LSTM(hidden_size, return_sequences=True))(x)
-output = TimeDistributed(Dense(out_size, activation='softmax'))(x)
+#output = TimeDistributed(Dense(out_size, activation='softmax'))(x)
+output = Dense(out_size)(x)
+crf = ChainCRF()
+crf_output = crf(output)
 #x = TimeDistributed(Dense(out_size))(x)
 #output = Activation('softmax')(x)
 #output = TimeDistributed(Dense(len(words) + 1, activation='softmax'))(x)
-model = Model(inputs = inputs, outputs = output)
+model = Model(inputs = inputs, outputs = crf_output)
 model.summary()
-model.compile(loss='categorical_crossentropy', optimizer='adam')
-
+#model.compile(loss='categorical_crossentropy', optimizer='adam')
+model.compile(loss=crf.loss, optimizer='adam')
 """
 model = Sequential()
 model.add(Embedding(len(words) + 1, vocab_dim, weights=[embedding_matrix], input_length=maxlen, trainable=True))
@@ -159,9 +163,9 @@ model.compile(loss='categorical_crossentropy', optimizer='adam')
 """
 
 batch_size = 32
-early_stop = EarlyStopping(monitor='val_loss', patience=2, verbose=1)
+early_stop = EarlyStopping(monitor='val_loss', patience=2, verbose=1, mode = 'auto')
 model.fit([X_char_train, X_train], y_train, batch_size=batch_size, epochs=15,
-          validation_data=([X_char_test, X_test], y_test), callbacks = early_stop)
+          validation_data=([X_char_test, X_test], y_test), callbacks = [early_stop])
 score = model.evaluate([X_char_test, X_test], y_test, batch_size=batch_size)
 print('Raw test score:', score)
 
