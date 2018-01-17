@@ -1,6 +1,6 @@
 ﻿# KoreaNER / 한국어 개체명
 
---
+---
 
 **Evaluation & Comparison:**
 
@@ -17,21 +17,19 @@ Corpus: National Institute of Korean Language (ROK) - NER Corpus / 국립국어�
 
 <sub><sup>[Source][17]</sub></sup>
 
---
+---
 
 **Future improvements:**
 
 - Add Jamo (Korean base character) level embeddings
 - Add POS information
 
---
+---
 
-<sub><sup>**References:**
+**References:**
 
 [Character-Aware Neural Language Models][2]
-
 [Boosting Named Entity Recognition with Neural Character Embeddings][1]
-
 [Attending To Characters In Neural Sequence Labeling Models][3]
 
 [Neural Architectures for Named Entity Recognition][4]
@@ -41,9 +39,8 @@ Corpus: National Institute of Korean Language (ROK) - NER Corpus / 국립국어�
 [Character-level Convolutional Networks for Text Classification][6]
 
 [A Syllable-based Technique for Word Embeddings of Korean Words][16]
-</sub></sup>
 
-<sub><sup>**Open source projects (Github):**
+**Open source projects (Github):**
 
 [CharCNN Pytorch][7]
 
@@ -62,7 +59,6 @@ Corpus: National Institute of Korean Language (ROK) - NER Corpus / 국립국어�
 [deep-named-entity-recognition][14]
 
 [Sequence Tagging with Tensorflow][15]
-</sub></sup>
 
   [1]: https://arxiv.org/pdf/1505.05008.pdf
   [2]: https://arxiv.org/pdf/1505.05008.pdf
