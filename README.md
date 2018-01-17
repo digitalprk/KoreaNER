@@ -35,9 +35,9 @@ Corpus: National Institute of Korean Language (ROK) - NER Corpus / 국립국어�
 			<td>0.6373</td>
 			<td>0.7785</td>
 			<td>0.7009</td>
-			<td>0.84</td>
-			<td>0.73</td>
-			<td>0.78</td>
+			<td>0.94</td>
+			<td>0.94</td>
+			<td>0.94</td>
 		</tr>
 		<tr>
 			<td>LC</td>
@@ -48,8 +48,8 @@ Corpus: National Institute of Korean Language (ROK) - NER Corpus / 국립국어�
 			<td>0.8782</td>
 			<td>0.7002</td>
 			<td>0.71</td>
+			<td>0.76</td>
 			<td>0.73</td>
-			<td>0.72</td>
 		</tr>
 		<tr>
 			<td>OG</td>
@@ -59,8 +59,8 @@ Corpus: National Institute of Korean Language (ROK) - NER Corpus / 국립국어�
 			<td>0.7624</td>
 			<td>0.7087</td>
 			<td>0.7346</td>
-			<td>0.70</td>
-			<td>0.66</td>
+			<td>0.73</td>
+			<td>0.63</td>
 			<td>0.68</td>
 		</tr>
 		<tr>
@@ -71,8 +71,8 @@ Corpus: National Institute of Korean Language (ROK) - NER Corpus / 국립국어�
 			<td>0.8834</td>
 			<td>0.6127</td>
 			<td>0.7236</td>
-			<td>0.84</td>
-			<td>0.73</td>
+			<td>0.80</td>
+			<td>0.75</td>
 			<td>0.78</td>
 		</tr>
 		<tr>
@@ -83,9 +83,9 @@ Corpus: National Institute of Korean Language (ROK) - NER Corpus / 국립국어�
 			<td>0.5441</td>
 			<td>0.8810</td>
 			<td>0.6727</td>
-			<td>0.96</td>
-			<td>0.81</td>
-			<td>0.88</td>
+			<td>0.98</td>
+			<td>0.89</td>
+			<td>0.93</td>
 		</tr>
 	</tbody>
 </table>
