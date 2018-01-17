@@ -1,29 +1,24 @@
 from import_data import load_corpus
-from keras.models import Sequential
 import numpy as np
-from keras.layers import TimeDistributed, Dense, Activation, Bidirectional, LSTM
+from keras.layers import TimeDistributed, Dense, Bidirectional, LSTM
 from keras.preprocessing.sequence import pad_sequences
 from keras.layers.embeddings import Embedding
 from sklearn.cross_validation import train_test_split
-from sklearn.metrics import confusion_matrix, accuracy_score
+from sklearn.metrics import accuracy_score
 from keras.preprocessing import sequence
 from keras.models import Model
 from crf import ChainCRF
 from gensim.models.keyedvectors import KeyedVectors
 from sklearn.metrics import classification_report
 from keras.callbacks import EarlyStopping
-#from keras.layers.convolutional import Convolution1D, MaxPooling1D, Convolution2D, MaxPooling2D, Conv2D
-#from keras.layers.core import Dense, Dropout, Activation, Flatten, Permute, Reshape, Input
 from keras.layers import Input, Dropout, Reshape, Concatenate, Conv2D, MaxPooling2D, BatchNormalization
 
-
-
-vocab_dim = 200   # dimensionality of the word vectors
-max_features = 20000
+vocab_dim = 200
 embedding_size = 128
 hidden_size = 32
 nb_filters = 10
 char_embedding_size = 15
+batch_size = 32
 
 word_vectors = KeyedVectors.load('ko/ko.bin')
 X, y = load_corpus()
@@ -33,7 +28,9 @@ labels = list(set([c for x in y for c in x]))
 max_word_len = max([len(c) for x in X for c in x])
 
 words = list(set(all_text))
+words.append('UNKWRD')
 chars = list(set([char for word in words for char in word]))
+chars.append('UNKCHR')
 
 char2ind = {char: index for index, char in enumerate(chars)}
 ind2char = {index: char for index, char in enumerate(chars)}
@@ -54,36 +51,25 @@ def encode(x, n):
     result[x] = 1
     return result
 
-# prepare char embeddings
-
 # Create a 3D Matrix num_of_sentences * words (padded to max num of words) * chars (padded to max num of chars)
+
 X_char = [sequence.pad_sequences([[char2ind[char] for char in word] for word in x], maxlen = max_word_len) for x in X]
 X_char = sequence.pad_sequences(X_char, maxlen=maxlen)
-#X_char = X_char.reshape(len(X_char),maxlen*max_word_len)
-
-"""
-X_char = []
-for sentence in X:
-    for word in sentence:
-        word_chars = []
-        for character in word:
-            word_chars.append(char2ind[character])
-            
-        X_char.append(word_chars)
-X_char = sequence.pad_sequences(X_char, maxlen = max_word_len)
-"""          
+         
+# Create a matrix with word index
 
 X = [[word2ind[c] for c in x] for x in X]
 X = sequence.pad_sequences(X, maxlen=maxlen)
 
-#X = [X, X_char]
-
-#x = 0 / 0
+# Convert labels to one-hot vectors
 
 max_label = max(label2ind.values()) + 1
 y = [[0] * (maxlen - len(ey)) + [label2ind[c] for c in ey] for ey in y]
 y = [[encode(c, max_label) for c in ey] for ey in y]
 y = pad_sequences(y, maxlen=maxlen)
+
+
+# train/test split
 
 X_train, X_test, y_train, y_test = train_test_split(X, y,
                                                test_size=0.3, random_state=42)
@@ -91,7 +77,7 @@ X_train, X_test, y_train, y_test = train_test_split(X, y,
 X_char_train, X_char_test, y_train, y_test = train_test_split(X_char, y,
                                                test_size=0.3, random_state=42)
 
-# prepare word embedding matrix
+# Prepare word embedding matrix from pre-trained vectors
 
 embedding_matrix = np.zeros((len(words) + 1, vocab_dim))
 for word, i in word2ind.items():
@@ -101,7 +87,7 @@ for word, i in word2ind.items():
 word_idx = Input(batch_shape=(None, maxlen), dtype='int32')
 word_embeddings = Embedding(len(words) + 1, vocab_dim, weights=[embedding_matrix], input_length=maxlen, trainable=True)(word_idx)
 
-# prepare char embedding
+# CNN Layers for character embeddings
 
 feature_maps = [50,100,150,200,200,200,200]
 kernels = [1,2,3,4,5,6,7]
@@ -119,52 +105,31 @@ def CNN(seq_length, length, input_size, feature_maps, kernels, x):
     x = Reshape((seq_length, sum(feature_maps)))(x)
     return x
 
-def Single_CNN(seq_length, length, input_size, feature_maps, kernels, x): #testing with single layer
-    kernel = 3
-    reduced_l = length - kernel + 1
-    conv = Conv2D(50, (1, kernel), activation='tanh', data_format="channels_last")(x)
-    maxp = MaxPooling2D((1, reduced_l), data_format="channels_last")(conv)
-    x = Reshape((seq_length, 50))(maxp)
-    return x    
-
 char_idx = Input(batch_shape=(None, maxlen, max_word_len), dtype='int32')
 char_embeddings = TimeDistributed(Embedding(len(char2ind) + 1, char_embedding_size))(char_idx)
-cnn = Single_CNN(maxlen, max_word_len, char_embedding_size, feature_maps, kernels, char_embeddings)
+cnn = CNN(maxlen, max_word_len, char_embedding_size, feature_maps, kernels, char_embeddings)
 
-
-#word_embeddings = Embedding(len(words) + 1, vocab_dim, weights=[embedding_matrix], input_length=maxlen, trainable=True)
+# Concatenate character embeddings and word embeddings
 
 x = Concatenate()([cnn, word_embeddings])
 inputs = [char_idx, word_idx]
 
+# Model is Bi-LSTM with a CRF Layer
+
 x = BatchNormalization()(x)
 x = Bidirectional(LSTM(hidden_size, return_sequences=True))(x)
-#output = TimeDistributed(Dense(out_size, activation='softmax'))(x)
 output = Dense(out_size)(x)
 crf = ChainCRF()
 crf_output = crf(output)
-#x = TimeDistributed(Dense(out_size))(x)
-#output = Activation('softmax')(x)
-#output = TimeDistributed(Dense(len(words) + 1, activation='softmax'))(x)
+
 model = Model(inputs = inputs, outputs = crf_output)
 model.summary()
-#model.compile(loss='categorical_crossentropy', optimizer='adam')
 model.compile(loss=crf.loss, optimizer='adam')
-"""
-model = Sequential()
-model.add(Embedding(len(words) + 1, vocab_dim, weights=[embedding_matrix], input_length=maxlen, trainable=True))
-#model.add(Embedding(input_dim=max_features, output_dim= 128,
-#                    input_length=maxlen, mask_zero=True))
-model.add(Bidirectional(LSTM(hidden_size, return_sequences=True)))
-model.add(TimeDistributed(Dense(out_size)))
-model.add(Activation('softmax'))
 
-model.compile(loss='categorical_crossentropy', optimizer='adam')
-"""
 
-batch_size = 32
 early_stop = EarlyStopping(monitor='val_loss', patience=2, verbose=1, mode = 'auto')
-model.fit([X_char_train, X_train], y_train, batch_size=batch_size, epochs=15,
+
+model.fit([X_char_train, X_train], y_train, batch_size=batch_size, epochs=150,
           validation_data=([X_char_test, X_test], y_test), callbacks = [early_stop])
 score = model.evaluate([X_char_test, X_test], y_test, batch_size=batch_size)
 print('Raw test score:', score)

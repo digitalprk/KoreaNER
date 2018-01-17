@@ -1,8 +1,8 @@
-# KoreaNER / 한국어 개체명
+﻿# KoreaNER / 한국어 개체명
 
 
 **References:**
-
+<sub><sup>
 [Character-Aware Neural Language Models][2]
 
 [Boosting Named Entity Recognition with Neural Character Embeddings][1]
@@ -15,9 +15,11 @@
 
 [Character-level Convolutional Networks for Text Classification][6]
 
+[A Syllable-based Technique for Word Embeddings of Korean Words][16]
+</sub></sup>
 
 **Open source projects (Github):**
-
+<sub><sup>
 [CharCNN Pytorch][7]
 
 [word2vec-keras-in-gensim][8]
@@ -35,7 +37,7 @@
 [deep-named-entity-recognition][14]
 
 [Sequence Tagging with Tensorflow][15]
-
+</sub></sup>
 
   [1]: https://arxiv.org/pdf/1505.05008.pdf
   [2]: https://arxiv.org/pdf/1505.05008.pdf
@@ -52,5 +54,6 @@
   [13]: https://github.com/jarfo/kchar/
   [14]: https://github.com/aatkinson-old/deep-named-entity-recognition/blob/master/
   [15]: https://guillaumegenthial.github.io/sequence-tagging-with-tensorflow.html
+  [16]: https://arxiv.org/pdf/1708.01766.pdf
   
 
