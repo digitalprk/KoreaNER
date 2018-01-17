@@ -6,7 +6,7 @@
 
 Corpus: National Institute of Korean Language (ROK) - NER Corpus / 국립국어원 - 개체명 인식용 말뭉치[18]
 
-| Category      | KoNER/코너 (2016)             | Annie (2016)                 | KoreaNER                     | 
+| Category      | KoNER/코너 (2016)           ||| Annie (2016)               ||| KoreaNER                   ||| 
 | ------------- |:----------------------------:|:----------------------------:|:----------------------------:|
 |               | Precision | Recall | F-Score | Precision | Recall | F-Score | Precision | Recall | F-Score |
 | DT            | 0.894     | 0.880  | 0.887   | 0.6373    | 0.7785 | 0.7009  | 0.96      | 0.81   | 0.88    |
@@ -29,7 +29,9 @@ Corpus: National Institute of Korean Language (ROK) - NER Corpus / 국립국어�
 **References:**
 
 [Character-Aware Neural Language Models][2]
+
 [Boosting Named Entity Recognition with Neural Character Embeddings][1]
+	
 [Attending To Characters In Neural Sequence Labeling Models][3]
 
 [Neural Architectures for Named Entity Recognition][4]
