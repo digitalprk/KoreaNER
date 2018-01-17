@@ -129,7 +129,7 @@ model.compile(loss=crf.loss, optimizer='adam')
 
 early_stop = EarlyStopping(monitor='val_loss', patience=2, verbose=1, mode = 'auto')
 
-model.fit([X_char_train, X_train], y_train, batch_size=batch_size, epochs=150,
+model.fit([X_char_train, X_train], y_train, batch_size=batch_size, epochs=50,
           validation_data=([X_char_test, X_test], y_test), callbacks = [early_stop])
 score = model.evaluate([X_char_test, X_test], y_test, batch_size=batch_size)
 print('Raw test score:', score)
