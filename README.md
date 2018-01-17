@@ -6,15 +6,89 @@
 
 Corpus: National Institute of Korean Language (ROK) - NER Corpus / 국립국어원 - 개체명 인식용 말뭉치[18]
 
-| Category      | KoNER/코너 (2016)           ||| Annie (2016)               ||| KoreaNER                   ||| 
-| ------------- |:----------------------------:|:----------------------------:|:----------------------------:|
-|               | Precision | Recall | F-Score | Precision | Recall | F-Score | Precision | Recall | F-Score |
-| DT            | 0.894     | 0.880  | 0.887   | 0.6373    | 0.7785 | 0.7009  | 0.96      | 0.81   | 0.88    |
-| LC            | 0.793     | 0.853  | 0.822   | 0.5822    | 0.8782 | 0.7002  | 0.71      | 0.73   | 0.72    |
-| OG            | 0.824     | 0.772  | 0.797   | 0.7624    | 0.7087 | 0.7346  | 0.70      | 0.66   | 0.68    |
-| PS            | 0.915     | 0.885  | 0.899   | 0.8834    | 0.6127 | 0.7236  | 0.84      | 0.73   | 0.78    |
-| TI            | 0.872     | 0.810  | 0.840   | 0.5441    | 0.8810 | 0.6727  | 0.96      | 0.81   | 0.88    |
 
+<table>
+	<tbody>
+		<tr>
+			<td><b>Category</b></td>
+			<td colspan="3" align = "center"><b>KoNER/코너 (2016)</b></td>
+			<td colspan="3" align = "center"><b>Annie (2016)</b></td>
+			<td colspan="3" align = "center"><b>KoreaNER</b></td>
+		</tr>
+		<tr>
+			<td></td>
+			<td>Precision</td>
+			<td>Recall</td>
+			<td>F-Score</td>
+			<td>Precision</td>
+			<td>Recall</td>
+			<td>F-Score</td>
+			<td>Precision</td>
+			<td>Recall</td>
+			<td>F-Score</td>
+		</tr>
+		<tr>
+			<td>DT</td>
+			<td>0.894</td>
+			<td>0.880</td>
+			<td>0.887</td>
+			<td>0.6373</td>
+			<td>0.7785</td>
+			<td>0.7009</td>
+			<td>0.96</td>
+			<td>0.81</td>
+			<td>0.88</td>
+		</tr>
+		<tr>
+			<td>LC</td>
+			<td>0.793</td>
+			<td>0.853</td>
+			<td>0.822</td>
+			<td>0.5822</td>
+			<td>0.8782</td>
+			<td>0.7002</td>
+			<td>0.71</td>
+			<td>0.73</td>
+			<td>0.72</td>
+		</tr>
+		<tr>
+			<td>OG</td>
+			<td>0.824</td>
+			<td>0.772</td>
+			<td>0.797</td>
+			<td>0.7624</td>
+			<td>0.7087</td>
+			<td>0.7346</td>
+			<td>0.70</td>
+			<td>0.66</td>
+			<td>0.68</td>
+		</tr>
+		<tr>
+			<td>PS</td>
+			<td>0.915</td>
+			<td>0.885</td>
+			<td>0.899</td>
+			<td>0.8834</td>
+			<td>0.6127</td>
+			<td>0.7236</td>
+			<td>0.84</td>
+			<td>0.73</td>
+			<td>0.78</td>
+		</tr>
+		<tr>
+			<td>TI</td>
+			<td>0.872</td>
+			<td>0.810</td>
+			<td>0.840</td>
+			<td>0.5441</td>
+			<td>0.8810</td>
+			<td>0.6727</td>
+			<td>0.96</td>
+			<td>0.81</td>
+			<td>0.88</td>
+		</tr>
+	</tbody>
+</table>
 <sub><sup>[Source][17]</sub></sup>
 
 ---
