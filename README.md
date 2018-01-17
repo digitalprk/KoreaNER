@@ -35,9 +35,9 @@ Corpus: National Institute of Korean Language (ROK) - NER Corpus / 국립국어�
 			<td>0.6373</td>
 			<td>0.7785</td>
 			<td>0.7009</td>
-			<td>0.96</td>
-			<td>0.81</td>
-			<td>0.88</td>
+			<td>0.84</td>
+			<td>0.73</td>
+			<td>0.78</td>
 		</tr>
 		<tr>
 			<td>LC</td>
