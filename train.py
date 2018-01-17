@@ -11,7 +11,11 @@ from crf import ChainCRF
 from gensim.models.keyedvectors import KeyedVectors
 from sklearn.metrics import classification_report
 from keras.callbacks import EarlyStopping
+import keras.backend as K
 from keras.layers import Input, Dropout, Reshape, Concatenate, Conv2D, MaxPooling2D, BatchNormalization
+from collections import Counter
+from itertools import product
+import functools
 
 vocab_dim = 200
 embedding_size = 128
@@ -40,6 +44,7 @@ ind2word = {index: word for index, word in enumerate(words)}
 
 label2ind = {label: (index + 1) for index, label in enumerate(labels)}
 ind2label = {(index + 1): label for index, label in enumerate(labels)}
+
 
 out_size = len(label2ind) + 1
 lengths = [len(x) for x in X]
@@ -77,6 +82,14 @@ X_train, X_test, y_train, y_test = train_test_split(X, y,
 X_char_train, X_char_test, y_train, y_test = train_test_split(X_char, y,
                                                test_size=0.3, random_state=42)
 
+# class weights
+
+frequency = [list(array).index(1) for arrays in y_test for array in arrays]
+frequency = dict(Counter(frequency))
+frequency[0] = 0
+total = sum([frequency[k] for k in frequency])
+frequency = {k: frequency[k] / total for k in frequency}
+
 # Prepare word embedding matrix from pre-trained vectors
 
 embedding_matrix = np.zeros((len(words) + 1, vocab_dim))
@@ -92,6 +105,32 @@ word_embeddings = Embedding(len(words) + 1, vocab_dim, weights=[embedding_matrix
 feature_maps = [50,100,150,200,200,200,200]
 kernels = [1,2,3,4,5,6,7]
 
+class WeightedCategoricalCrossEntropy(object):
+
+  def __init__(self, weights):
+    nb_cl = len(weights)
+    self.weights = np.ones((nb_cl, nb_cl))
+    for class_idx, class_weight in weights.items():
+      self.weights[0][class_idx] = class_weight
+      self.weights[class_idx][0] = class_weight
+    self.__name__ = 'w_categorical_crossentropy'
+
+  def __call__(self, y_true, y_pred):
+    return self.w_categorical_crossentropy(y_true, y_pred)
+
+  def w_categorical_crossentropy(self, y_true, y_pred):
+    nb_cl = len(self.weights)
+    final_mask = K.zeros_like(y_pred[..., 0])
+    y_pred_max = K.max(y_pred, axis=-1)
+    y_pred_max = K.expand_dims(y_pred_max, axis=-1)
+    y_pred_max_mat = K.equal(y_pred, y_pred_max)
+    for c_p, c_t in product(range(nb_cl), range(nb_cl)):
+        w = K.cast(self.weights[c_t, c_p], K.floatx())
+        y_p = K.cast(y_pred_max_mat[..., c_p], K.floatx())
+        y_t = K.cast(y_pred_max_mat[..., c_t], K.floatx())
+        final_mask += w * y_p * y_t
+    return K.categorical_crossentropy(y_pred, y_true) * final_mask
+
 def CNN(seq_length, length, input_size, feature_maps, kernels, x):
     
     concat_input = []
@@ -104,6 +143,14 @@ def CNN(seq_length, length, input_size, feature_maps, kernels, x):
     x = Concatenate()(concat_input)
     x = Reshape((seq_length, sum(feature_maps)))(x)
     return x
+
+def Single_CNN(seq_length, length, input_size, feature_maps, kernels, x): #testing with single layer
+    kernel = 3
+    reduced_l = length - kernel + 1
+    conv = Conv2D(50, (1, kernel), activation='tanh', data_format="channels_last")(x)
+    maxp = MaxPooling2D((1, reduced_l), data_format="channels_last")(conv)
+    x = Reshape((seq_length, 50))(maxp)
+    return x  
 
 char_idx = Input(batch_shape=(None, maxlen, max_word_len), dtype='int32')
 char_embeddings = TimeDistributed(Embedding(len(char2ind) + 1, char_embedding_size))(char_idx)
@@ -118,6 +165,15 @@ inputs = [char_idx, word_idx]
 
 x = BatchNormalization()(x)
 x = Bidirectional(LSTM(hidden_size, return_sequences=True))(x)
+
+output = TimeDistributed(Dense(out_size, activation='softmax'))(x)
+
+loss = WeightedCategoricalCrossEntropy(frequency)
+
+model = Model(inputs = inputs, outputs = output)
+model.compile(loss = loss, optimizer='adam') #loss='categorical_crossentropy', optimizer='adam')
+
+"""
 output = Dense(out_size)(x)
 crf = ChainCRF()
 crf_output = crf(output)
@@ -125,11 +181,13 @@ crf_output = crf(output)
 model = Model(inputs = inputs, outputs = crf_output)
 model.summary()
 model.compile(loss=crf.loss, optimizer='adam')
-
+"""
 
 early_stop = EarlyStopping(monitor='val_loss', patience=2, verbose=1, mode = 'auto')
 
-model.fit([X_char_train, X_train], y_train, batch_size=batch_size, epochs=50,
+weights = {}
+
+model.fit([X_char_train, X_train], y_train, batch_size=batch_size, epochs=15,
           validation_data=([X_char_test, X_test], y_test), callbacks = [early_stop])
 score = model.evaluate([X_char_test, X_test], y_test, batch_size=batch_size)
 print('Raw test score:', score)
