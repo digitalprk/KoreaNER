@@ -16,25 +16,35 @@ from keras.layers import Input, Dropout, Reshape, Concatenate, Conv2D, MaxPoolin
 from collections import Counter
 from itertools import product
 import functools
+from jamo import decompose_character
 
 vocab_dim = 200
 embedding_size = 128
 hidden_size = 32
 nb_filters = 10
 char_embedding_size = 15
+jamo_embedding_size = 10
 batch_size = 32
 
 word_vectors = KeyedVectors.load('ko/ko.bin')
-X, y = load_corpus()
+X, y, pos_tags = load_corpus()
 
 all_text = [c for x in X for c in x]
 labels = list(set([c for x in y for c in x]))
 max_word_len = max([len(c) for x in X for c in x])
+max_jamo_len = max_word_len * 3
 
 words = list(set(all_text))
 words.append('UNKWRD')
+
 chars = list(set([char for word in words for char in word]))
 chars.append('UNKCHR')
+
+jamos = list(set([jamo for word in words for char in word for jamo in decompose_character(char)]))
+jamos.append('UNKJAM')
+
+tags = list(set([tag for list_pos in pos_tags for tag in list_pos]))
+tags.append('UNKPOS')
 
 char2ind = {char: index for index, char in enumerate(chars)}
 ind2char = {index: char for index, char in enumerate(chars)}
@@ -42,8 +52,15 @@ ind2char = {index: char for index, char in enumerate(chars)}
 word2ind = {word: index for index, word in enumerate(words)}
 ind2word = {index: word for index, word in enumerate(words)}
 
+jamo2ind = {jamo: (index + 1) for index, jamo in enumerate(jamos)}
+ind2jamo = {(index + 1): jamo for index, jamo in enumerate(jamos)}
+
 label2ind = {label: (index + 1) for index, label in enumerate(labels)}
 ind2label = {(index + 1): label for index, label in enumerate(labels)}
+
+pos2ind = {pos: (index + 1) for index, pos in enumerate(tags)}
+ind2pos = {(index + 1): pos for index, pos in enumerate(tags)}
+
 
 
 out_size = len(label2ind) + 1
@@ -60,7 +77,19 @@ def encode(x, n):
 
 X_char = [sequence.pad_sequences([[char2ind[char] for char in word] for word in x], maxlen = max_word_len) for x in X]
 X_char = sequence.pad_sequences(X_char, maxlen=maxlen)
-         
+
+# Create a matrix for jamos
+
+X_jamo = [sequence.pad_sequences([[jamo2ind[jamo] for char in word for jamo in decompose_character(char)] for word in x], maxlen = max_jamo_len) for x in X]
+X_jamo = sequence.pad_sequences(X_jamo, maxlen=maxlen)
+
+# Create a matrix for POS Tags
+
+max_pos = max(pos2ind.values()) + 1
+X_pos = [[0] * (maxlen - len(ey)) + [pos2ind[c] for c in ey] for ey in pos_tags]
+X_pos = [[encode(c, max_pos) for c in ey] for ey in X_pos]
+X_pos = pad_sequences(X_pos, maxlen=maxlen)
+
 # Create a matrix with word index
 
 X = [[word2ind[c] for c in x] for x in X]
@@ -82,6 +111,11 @@ X_train, X_test, y_train, y_test = train_test_split(X, y,
 X_char_train, X_char_test, y_train, y_test = train_test_split(X_char, y,
                                                test_size=0.3, random_state=42)
 
+X_jamo_train, X_jamo_test, y_train, y_test = train_test_split(X_jamo, y,
+                                               test_size=0.3, random_state=42)
+
+X_pos_train, X_pos_test, y_train, y_test = train_test_split(X_pos, y,
+                                               test_size=0.3, random_state=42)
 # class weights
 
 frequency = [list(array).index(1) for arrays in y_test for array in arrays]
@@ -95,7 +129,7 @@ for f in frequency:
 
 weights = []
 
-for sample in y:
+for sample in y_train:
     current_weight = []
     for line in sample:
         current_weight.append(frequency[list(line).index(1)])
@@ -126,32 +160,6 @@ word_embeddings = Embedding(len(words) + 1, vocab_dim, weights=[embedding_matrix
 feature_maps = [50,100,150,200,200,200,200]
 kernels = [1,2,3,4,5,6,7]
 
-class WeightedCategoricalCrossEntropy(object):
-
-  def __init__(self, weights):
-    nb_cl = len(weights)
-    self.weights = np.ones((nb_cl, nb_cl))
-    for class_idx, class_weight in weights.items():
-      self.weights[0][class_idx] = class_weight
-      self.weights[class_idx][0] = class_weight
-    self.__name__ = 'w_categorical_crossentropy'
-
-  def __call__(self, y_true, y_pred):
-    return self.w_categorical_crossentropy(y_true, y_pred)
-
-  def w_categorical_crossentropy(self, y_true, y_pred):
-    nb_cl = len(self.weights)
-    final_mask = K.zeros_like(y_pred[..., 0])
-    y_pred_max = K.max(y_pred, axis=-1)
-    y_pred_max = K.expand_dims(y_pred_max, axis=-1)
-    y_pred_max_mat = K.equal(y_pred, y_pred_max)
-    for c_p, c_t in product(range(nb_cl), range(nb_cl)):
-        w = K.cast(self.weights[c_t, c_p], K.floatx())
-        y_p = K.cast(y_pred_max_mat[..., c_p], K.floatx())
-        y_t = K.cast(y_pred_max_mat[..., c_t], K.floatx())
-        final_mask += w * y_p * y_t
-    return K.categorical_crossentropy(y_pred, y_true) * final_mask
-
 def CNN(seq_length, length, input_size, feature_maps, kernels, x):
     
     concat_input = []
@@ -165,6 +173,8 @@ def CNN(seq_length, length, input_size, feature_maps, kernels, x):
     x = Reshape((seq_length, sum(feature_maps)))(x)
     return x
 
+# Single CNN layer for jamo embeddings
+
 def Single_CNN(seq_length, length, input_size, feature_maps, kernels, x): #testing with single layer
     kernel = 3
     reduced_l = length - kernel + 1
@@ -173,14 +183,26 @@ def Single_CNN(seq_length, length, input_size, feature_maps, kernels, x): #testi
     x = Reshape((seq_length, 50))(maxp)
     return x  
 
+# Create char embeddings
+
 char_idx = Input(batch_shape=(None, maxlen, max_word_len), dtype='int32')
 char_embeddings = TimeDistributed(Embedding(len(char2ind) + 1, char_embedding_size))(char_idx)
 cnn = Single_CNN(maxlen, max_word_len, char_embedding_size, feature_maps, kernels, char_embeddings)
 
+# Create jamo embeddings
+
+jamo_idx = Input(batch_shape=(None, maxlen, max_jamo_len), dtype='int32')
+jamo_embeddings = TimeDistributed(Embedding(len(jamo2ind) + 1, jamo_embedding_size))(jamo_idx)
+jamo_cnn = Single_CNN(maxlen, max_jamo_len, jamo_embedding_size, feature_maps, kernels, jamo_embeddings)
+
+# Handle POS Tags
+
+pos_idx = Input(batch_shape=(None, maxlen, max_pos), dtype='float32')
+
 # Concatenate character embeddings and word embeddings
 
-x = Concatenate()([cnn, word_embeddings])
-inputs = [char_idx, word_idx]
+x = Concatenate()([cnn, word_embeddings, jamo_cnn, pos_idx])
+inputs = [char_idx, word_idx, jamo_idx, pos_idx]
 
 # Model is Bi-LSTM with a CRF Layer
 
@@ -206,11 +228,9 @@ model.compile(loss=crf.loss, optimizer='adam', sample_weight_mode='temporal')
 
 early_stop = EarlyStopping(monitor='val_loss', patience=2, verbose=1, mode = 'auto')
 
-weights = {}
-
-model.fit([X_char_train, X_train], y_train, batch_size=batch_size, epochs=150,
-          validation_data=([X_char_test, X_test], y_test), callbacks = [early_stop], sample_weight = weights)
-score = model.evaluate([X_char_test, X_test], y_test, batch_size=batch_size)
+model.fit([X_char_train, X_train, X_jamo_train, X_pos_train], y_train, batch_size=batch_size, epochs=15,
+          validation_data=([X_char_test, X_test, X_jamo_test, X_pos_test], y_test), callbacks = [early_stop], sample_weight = weights)
+score = model.evaluate([X_char_test, X_test, X_jamo_test, X_pos_test], y_test, batch_size=batch_size)
 print('Raw test score:', score)
 
 
@@ -222,14 +242,14 @@ def score(yh, pr):
     fpr = [c for row in ypr for c in row]
     return fyh, fpr
 
-pr = model.predict([X_char_train, X_train])
+pr = model.predict([X_char_train, X_train, X_jamo_train, X_pos_train])
 yh = y_train.argmax(2)
 pr = pr.argmax(2)
 fyh, fpr = score(yh, pr)
 print('Training accuracy:', accuracy_score(fyh, fpr))
 print(classification_report(fyh, fpr))
 
-pr = model.predict([X_char_test, X_test])
+pr = model.predict([X_char_test, X_test, X_jamo_test, X_pos_test])
 yh = y_test.argmax(2)
 pr = pr.argmax(2)
 fyh, fpr = score(yh, pr)

@@ -6,8 +6,10 @@ def load_corpus(file = 'NEtaggedCorpus_train.json'):
         corpus = json.load(fp)
     
     tagged_sentences = []
+    pos_tags = []
     for sentence in corpus['sentence']:
         current_sentence = [[a['lemma'], 'O'] for a in sentence['morp']]
+        current_pos_tags = [a['type'] for a in sentence['morp']]
         for named_entity in sentence['NE']:
             NE_begin = named_entity['begin']
             NE_end = named_entity['end']
@@ -15,8 +17,9 @@ def load_corpus(file = 'NEtaggedCorpus_train.json'):
             for i in range(NE_begin, NE_end + 1):
                 current_sentence[i][1] = NE_type
         tagged_sentences.append(current_sentence)
+        pos_tags.append(current_pos_tags)
     X = [[_[0] for _ in tagged_sentence] for tagged_sentence in tagged_sentences]
     y = [[_[1] for _ in tagged_sentence] for tagged_sentence in tagged_sentences]
-    return X, y
+    return X, y, pos_tags
         
     
