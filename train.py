@@ -89,6 +89,27 @@ frequency = dict(Counter(frequency))
 frequency[0] = 0
 total = sum([frequency[k] for k in frequency])
 frequency = {k: frequency[k] / total for k in frequency}
+category_weights = np.zeros(out_size)
+for f in frequency:
+    category_weights[f] = frequency[f]
+
+weights = []
+
+for sample in y:
+    current_weight = []
+    for line in sample:
+        current_weight.append(frequency[list(line).index(1)])
+    weights.append(current_weight)
+weights = np.array(weights)
+
+"""
+for i, sample in enumerate(y_train):
+    matrix_weight = np.array([])
+    for j, line in enumerate(sample):
+        matrix_weight.concatenate(line * category_weights)
+    weights.append(matrix_weight)
+"""
+    
 
 # Prepare word embedding matrix from pre-trained vectors
 
@@ -154,7 +175,7 @@ def Single_CNN(seq_length, length, input_size, feature_maps, kernels, x): #testi
 
 char_idx = Input(batch_shape=(None, maxlen, max_word_len), dtype='int32')
 char_embeddings = TimeDistributed(Embedding(len(char2ind) + 1, char_embedding_size))(char_idx)
-cnn = CNN(maxlen, max_word_len, char_embedding_size, feature_maps, kernels, char_embeddings)
+cnn = Single_CNN(maxlen, max_word_len, char_embedding_size, feature_maps, kernels, char_embeddings)
 
 # Concatenate character embeddings and word embeddings
 
@@ -165,7 +186,7 @@ inputs = [char_idx, word_idx]
 
 x = BatchNormalization()(x)
 x = Bidirectional(LSTM(hidden_size, return_sequences=True))(x)
-
+"""
 output = TimeDistributed(Dense(out_size, activation='softmax'))(x)
 
 loss = WeightedCategoricalCrossEntropy(frequency)
@@ -180,15 +201,15 @@ crf_output = crf(output)
 
 model = Model(inputs = inputs, outputs = crf_output)
 model.summary()
-model.compile(loss=crf.loss, optimizer='adam')
-"""
+model.compile(loss=crf.loss, optimizer='adam', sample_weight_mode='temporal')
+
 
 early_stop = EarlyStopping(monitor='val_loss', patience=2, verbose=1, mode = 'auto')
 
 weights = {}
 
-model.fit([X_char_train, X_train], y_train, batch_size=batch_size, epochs=15,
-          validation_data=([X_char_test, X_test], y_test), callbacks = [early_stop])
+model.fit([X_char_train, X_train], y_train, batch_size=batch_size, epochs=150,
+          validation_data=([X_char_test, X_test], y_test), callbacks = [early_stop], sample_weight = weights)
 score = model.evaluate([X_char_test, X_test], y_test, batch_size=batch_size)
 print('Raw test score:', score)
 
