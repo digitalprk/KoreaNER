@@ -89,7 +89,7 @@ Corpus: National Institute of Korean Language (ROK) - NER Corpus / 국립국어�
 		</tr>
 	</tbody>
 </table>
-[Source][17]
+[Source][16]
 
 ---
 
