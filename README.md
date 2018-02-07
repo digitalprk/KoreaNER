@@ -4,7 +4,7 @@
 
 **Evaluation & Comparison:**
 
-Corpus: National Institute of Korean Language (ROK) - NER Corpus / 국립국어원 - 개체명 인식용 말뭉치[18]
+Corpus: National Institute of Korean Language (ROK) - NER Corpus / 국립국어원 - 개체명 인식용 말뭉치 ([Link][18])
 
 
 <table>
@@ -95,8 +95,9 @@ Corpus: National Institute of Korean Language (ROK) - NER Corpus / 국립국어�
 
 **Future improvements:**
 
-- Add Jamo (Korean base character) level embeddings
-- Add POS information
+- Add Gazeteer
+- Add specific features for PS/LOC
+- Web API
 
 ---
 
